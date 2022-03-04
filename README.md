@@ -1,0 +1,2 @@
+# atcoder_samplechecker
+AtCoderのサンプル入出力を用いたコードチェックを自動で行うプログラムです
