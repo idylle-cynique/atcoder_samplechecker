@@ -44,19 +44,20 @@ class AtCoderSample:
         '''
         
         # 現在のコンテストではアルファベット表記の問題が、以前は数字で表記されているので置き換える必要がある
-        oldabc_dict = {"a":"1", "b":"2", "c":"3", "d":"4", "e":"5", "f":"6"}
+        oldabc_dict = {"a":"1", "b":"2", "c":"3", "d":"4", "e":"5", "f":"6", "g":"7", "h":"8"}
 
         html = requests.get(self.url)
         soup = BeautifulSoup(html.content, "html.parser")
         pagetitle = str(soup.find("title"))
+        print(pagetitle)
 
         if "404 Not Found" in pagetitle and recheck == False:  # 再チェック処理でないなら修整処理を施す
             print("リンクを修正します")
             contestring = self.title.lower().split("-")
-            contestring[-1] = oldabc_dict[contestring[-1]]
+            contestring[-1] = oldabc_dict[contestring[-1][0]]
             self.url = "https://atcoder.jp/contests/{:}/tasks/{:}".format(contestring[0], "_".join(contestring))
             print(self.url)
-            return self.resolve_url(self.url) # リンクが適正か再チェック
+            return self.resolve_url(recheck=True) # リンクが適正か再チェック
         elif "404 Not Found" in pagetitle and recheck == True: # 再チェックしてなおリンクが不正ならFalseを返す
             return False
         else:                                                  # 適切に修整された場合はTrueを返す

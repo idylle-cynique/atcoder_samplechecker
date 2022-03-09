@@ -174,10 +174,14 @@ class AtCoderMainWindow:
                
     def check_code(self):
         con, num, alph = self.get_basicinfo()
+
         print("解答チェックを開始します...")
 
         if not(self.checksystem.resolve_string(con,num,alph)):
-            messagebox.showerror("ファイル検出エラー", "チェック対象となるコードファイルがディレクトリ内に存在しませんでした")
+            messagebox.showerror(
+                "問題取得エラー", 
+                "チェック対象となる問題が存在しませんでした\n 「問題を確認する」ボタンから対象の問題が確かに存在するか再度チェックしてください"
+            )
             return False
             # メッセージボックスを出して入力値が不正であることを示すようにしておきたい
 
@@ -187,6 +191,12 @@ class AtCoderMainWindow:
 
         dictdata = self.checksystem.start_samplecheck()
         judgements = {"WA":0, "AC":0, "TLE":0, "RE":0}
+
+        if not(dictdata): # チェック後解答データではなくブール値(False)が返ってきた場合
+            messagebox.showerror("ファイル検出エラー", 
+                "チェック対象となるコードファイルがディレクトリ内に存在しませんでした")
+            return False
+
 
         for k,v in dictdata.items():
             if k == 1:
@@ -232,8 +242,13 @@ class AtCoderMainWindow:
             
     def browse_link(self):
         con, num, alph = self.get_basicinfo()
-        if not(self.checksystem.resolve_string(con,num,alph)):
-            pass # メッセージボックスを出したい
+        self.checksystem.resolve_string(con, num, alph)
+        url = self.checksystem.resolve_url()
+        print("flag", url)
+        if not(url):
+            messagebox.showerror(
+                "問題チェックエラー",
+                "指定された問題が見つかりませんでした。\nブラウザから対象の問題が確かに存在するかチェックしてください")
         self.checksystem.browse_question() # リンク先にアクセス
 
 
