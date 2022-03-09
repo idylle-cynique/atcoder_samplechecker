@@ -1,22 +1,28 @@
 
-import os, json
-from tabnanny import check
+import os, json, re
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.scrolledtext as st
+import tkinter.font as font
+import tkinter.messagebox as messagebox
 import webbrowser
 
 import sample_checker # 自前のプログラム
 
-
 class AtCoderMainWindow:
     def __init__(self):
         self.make_objects()
+        self.set_style()
         self.make_window()
         self.make_sampleframe()
         self.make_buttons()
         self.make_widgets()
     
+    def set_style(self):
+        framefontstyle = ttk.Style()
+        framefontstyle.configure("Main.TRadioButton",font=("HackGen Console Regular",36))
+        self.radiostyle = "Main.TRadiobutton"
+
     def make_objects(self):
         # メインウィンドウの設定
         self.root = tk.Tk()
@@ -41,9 +47,12 @@ class AtCoderMainWindow:
         # スクロールテキストボックスの設定
         box_length=80
         box_height=12
-        self.sample_input  = st.ScrolledText(self.sampleframe, width=box_length,    height=box_height*2//3)
-        self.mycode_output = st.ScrolledText(self.sampleframe, width=box_length//2, height=box_height)
-        self.sample_output = st.ScrolledText(self.sampleframe, width=box_length//2, height=box_height)
+        self.sample_input  = st.ScrolledText(self.sampleframe,    font=("HackGen Console Regular",12),
+                                             width=box_length,    height=box_height*2//3)
+        self.mycode_output = st.ScrolledText(self.sampleframe,    font=("HackGen Console Regular",12),
+                                             width=box_length//2, height=box_height)
+        self.sample_output = st.ScrolledText(self.sampleframe,    font=("HackGen Console Regular",12),
+                                             width=box_length//2, height=box_height)
         
         height = 0
         self.sample_input.grid(row=1, column=0, columnspan=2,
@@ -79,16 +88,16 @@ class AtCoderMainWindow:
         button_names = ["ABC", "ARC", "AGC"]
         buttons = []
         for i in range(len(button_names)):
-            buttons.append(ttk.Radiobutton(self.frame,
-                                           text=button_names[i],
-                                           variable=self.contestname,
-                                           value = button_names[i],
-                                           command=lambda:self.get_value("ラジオボタン")))
-            buttons[i].grid(row=i+1,
-                            padx=10, pady=5)
+            buttons.append(ttk.Radiobutton(
+                self.frame, style=self.radiostyle,
+                text=button_names[i],
+                variable=self.contestname,
+                value = button_names[i],
+                command=lambda:self.get_value()))
+            buttons[i].grid(row=i+1,padx=10, pady=5)
         
         # 問題ページへのアクセスボタン
-        browse_question = ttk.Button(self.frame, text="❔  問題を確認する",                                
+        browse_question = ttk.Button(self.frame, text="❔ 問題を確認する",                                
                                      padding=(10,10,10,10),  command=self.browse_link)
         browse_question.grid(row=2, rowspan=1, column=4, padx=10, pady=5,)        
 
@@ -165,9 +174,11 @@ class AtCoderMainWindow:
                
     def check_code(self):
         con, num, alph = self.get_basicinfo()
-        print("解答チェック")
+        print("解答チェックを開始します...")
+
         if not(self.checksystem.resolve_string(con,num,alph)):
-            print("どっかあかんで。")
+            messagebox.showerror("ファイル検出エラー", "チェック対象となるコードファイルがディレクトリ内に存在しませんでした")
+            return False
             # メッセージボックスを出して入力値が不正であることを示すようにしておきたい
 
         self.mycode_output.delete(0., tk.END)
@@ -178,6 +189,15 @@ class AtCoderMainWindow:
         judgements = {"WA":0, "AC":0, "TLE":0, "RE":0}
 
         for k,v in dictdata.items():
+            if k == 1:
+                self.sample_input.insert(tk.END,  "-"*(len(f"Sample Case No.{k:0=2}  \n")))
+                self.sample_output.insert(tk.END, "-"*(len(f"Sample Case No.{k:0=2}  \n")))
+                self.mycode_output.insert(tk.END, "-"*(len(f"Sample Case No.{k:0=2}  \n")))
+
+            self.sample_input.insert(tk.END,  f"\nSample Case No.{k:0=2}  \n")
+            self.sample_output.insert(tk.END, f"\nSample Case No.{k:0=2}  \n")
+            self.mycode_output.insert(tk.END, f"\nSample Case No.{k:0=2}  \n")
+
             for key,val in v.items():
                 #print(key,val)
                 if key == "sample_i":
@@ -189,25 +209,26 @@ class AtCoderMainWindow:
                         data = f.read()
                         self.sample_output.insert(tk.END,data)
                 elif key == "answer":
-                    with open(val, "r") as f:
-                        data = f.read()
-                        self.mycode_output.insert(tk.END,data)
+                    if v["judge"] == "AC":
+                        with open(val, "r") as f:
+                            data = f.read()
+                            self.mycode_output.insert(tk.END,data)
+                elif key == "error":
+                    if v["judge"] == "RE":
+                        with open(val, "r") as f:
+                            data = f.read()
+                            self.mycode_output.insert(tk.END,data)
                 elif key == "judge":
                     judgements[val] += 1 
+            self.sample_input.insert(tk.END, f"")
+            self.sample_input.insert(tk.END,  "\n"+("-"*len(f"\nSample Case No.{k:0=2}  \n")))
+            self.sample_output.insert(tk.END, "\n"+("-"*len(f"\nSample Case No.{k:0=2}  \n")))
+            self.mycode_output.insert(tk.END, "\n"+("-"*len(f"\nSample Case No.{k:0=2}  \n")))
         
         answer_data = f"AC:{judgements['AC']} WA:{judgements['WA']} TLE:{judgements['TLE']} RE:{judgements['RE']}"
         self.judgement.set(answer_data)
         print("チェックが終了しました")
-
-
-
-
-
-
-
-        
-            
-        
+        return True
             
     def browse_link(self):
         con, num, alph = self.get_basicinfo()
@@ -221,10 +242,9 @@ class AtCoderMainWindow:
         self.option_window = AtCoderOptionWindow()
         self.option_window.startup()
 
-    def get_value(self, widget_name):
+    def get_value(self):
         contest = self.contestname.get()
-        
-        print(contest, widget_name)
+        #print(contest, widget_name)
 
     def startup(self):
         self.root.mainloop()
@@ -324,8 +344,7 @@ class AtCoderOptionWindow:
             self.arcdirpath.get()
         if contest == "agc_dirpath":
             self.agcdirpath.get()
-        #print(data,":",type(data))
-        print(f"{contest}の変更ボタンが押された")
+        #print(data,":",type(data)); print(f"{contest}の変更ボタンが押された")
     
     def startup(self): # 起動
         self.option_window.mainloop()
@@ -337,7 +356,6 @@ class AtCoderOptionWindow:
 
 
 def main():
-    url = r"https://atcoder.jp/contests/arc012/tasks/arc012_b"
     window = AtCoderMainWindow()
     window.startup()
 
