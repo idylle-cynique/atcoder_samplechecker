@@ -26,10 +26,10 @@ class AtCoderSample:
         
         number = "{:0=3}".format(int(number)) # 0埋めした文字列に変換
 
-        # 問題タイトルを容易
+        # 問題タイトルを用意
         self.title = contest+number + "-" + alphabet
 
-        # 問題URLを容易
+        # 問題URLを用意
         url_stra = contest.lower() + number
         url_strb = contest.lower() + number + "_" + alphabet.lower()
         print(self.title, url_stra, url_strb)
@@ -160,7 +160,7 @@ class AtCoderSample:
 
         if not(os.path.exists(codefile)):
             print("解答コードがありませんでした")
-            return
+            return False
 
 
         return_data = {}
@@ -191,17 +191,17 @@ class AtCoderSample:
                 
                 timer = timechecker.TimeChecker(os.system(commandline)) # TimeCheckerクラスで解答時間をチェック
 
-                regulation_time = 2.1
-                if timer.elapsed_time > regulation_time:
+                if timer.elapsed_time > timer.set_time: # TLE判定
+                    print(f"{filename}は処理に時間が掛かり過ぎている……")
                     temp_data["judge"] = "TLE"
-                elif filecmp.cmp(answer,sample_o):
+                elif filecmp.cmp(answer,sample_o):      # AC判定
                     temp_data["judge"] = "AC"
                 else:
-                    with open(error,"r") as err:
+                    with open(error,"r") as err:        # RE判定
                         string = err.read()
                         if len(string) > 0:
                             temp_data["judge"] = "RE"
-                        else:
+                        else:                           # WA判定
                             temp_data["judge"] = "WA"
                 return_data[n] = temp_data                
             else:
