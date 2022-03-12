@@ -190,7 +190,8 @@ class AtCoderSample:
                 commandline = f'{language} "{codefile}" < "{sample}" 1> "{answer}" 2> "{error}"'
                 print(commandline)
                 
-                timer = timechecker.TimeChecker(os.system(commandline)) # TimeCheckerクラスで解答時間をチェック
+                timer = timechecker.TimeChecker(os.system,commandline) # TimeCheckerクラスで解答時間をチェック
+                timer.start_timer()
 
                 if timer.elapsed_time > timer.set_time: # TLE判定
                     print(f"{filename}は処理に時間が掛かり過ぎている……")

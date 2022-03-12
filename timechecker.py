@@ -8,27 +8,25 @@ import threading
 
 class TimeChecker:
     elapsed_time = float(0)
-    def __init__(self,func,set_time=2.10):
+    def __init__(self,func,commandline,set_time=2.10):
         self.set_time = set_time
-        self.thread_func = threading.Thread(target=func,daemon=True)
+        self.thread_func = threading.Thread(target=func, args=(commandline,), daemon=True)
 
     def start_timer(self):
         start_time = time.perf_counter()
-
         self.thread_func.start()
-        self.thread_func.join(timeout=self.set_time*1.5)
+        self.thread_func.join(timeout=self.set_time)
 
         self.elapsed_time = time.perf_counter() - start_time
         print(self.elapsed_time)
 
-
-def longtime():
-    for n in range(10):
+def longtime(x):
+    for n in range(x**9):
         pass
     return 
 
 def main():
-    timer = TimeChecker(func=longtime)
+    timer = TimeChecker(func=longtime,commandline=5)
     timer.start_timer()
 
     if timer.elapsed_time > timer.set_time:
@@ -36,8 +34,6 @@ def main():
     else:
         print("NOT TLE")
 
-    hogetimer = TimeChecker(lambda:[i for i in range(10**6)])
-    hogetimer.start_timer()
 
 if __name__ == "__main__":
     main()
