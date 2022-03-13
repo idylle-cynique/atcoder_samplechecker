@@ -5,7 +5,7 @@ import tkinter.ttk as ttk
 import tkinter.scrolledtext as st
 import tkinter.font as font
 import tkinter.messagebox as messagebox
-import webbrowser
+import webbrowser, subprocess
 
 import sample_checker # 自前のプログラム
 
@@ -42,6 +42,10 @@ class AtCoderMainWindow:
         self.sampleframe.propagate(False)
         self.sampleframe.grid(row=1, column=0,
                               padx=10, pady=5,)
+        
+        self.bottomframe = ttk.Frame(self.root,)
+        self.bottomframe.grid(row=2, column=0, padx=10, pady=10)
+
 
     def make_sampleframe(self):
         # スクロールテキストボックスの設定
@@ -79,6 +83,9 @@ class AtCoderMainWindow:
         judge_label.grid(row=4, column=1, padx=10, pady=5, sticky=tk.E)
 
     def make_buttons(self):
+        def view_readme():
+            subprocess.Popen(["start", os.path.abspath(r"./README.md")], shell=True)
+
         # 各種ボタンの入力値を記録するウィジェット変数を生成
         self.contestname = tk.StringVar()
         self.question = tk.StringVar()
@@ -98,26 +105,38 @@ class AtCoderMainWindow:
         
         # 問題ページへのアクセスボタン
         browse_question = ttk.Button(self.frame, text="❔ 問題を確認する",                                
-                                     padding=(10,10,10,10),  command=self.browse_link)
+                                     padding=(10,36,10,36),  command=self.browse_link)
         browse_question.grid(row=2, rowspan=1, column=4, padx=10, pady=5,)        
-
-        # 設定ボタンの生成
-        settings_button = ttk.Button(self.frame, text="⚙ ディレクトリ設定",                                
-                                     padding=(10,10,10,10),  command=self.settings)
-        settings_button.grid(row=1, rowspan=1, column=4, padx=10, pady=5,)
         
         # 実行ボタンの生成
-        exe_button = ttk.Button(self.frame, text="チェック開始",                                
+        exe_button = ttk.Button(self.frame, text="🔘 チェック開始",                                
                                 padding=(10,36,10,36), 
                                 command=lambda:self.check_code(
 
                                 ))
         exe_button.grid(row=1, rowspan=3, column=3, padx=10, pady=5,)
+        
+        '''
+            最下部のフレーム内のウィジェットに関する設定
+        '''
+        ipad_set = (20,5,20,5) # 内部paddingの設定は変数で一括管理する
+        # 設定ボタンの生成
+        settings_button = ttk.Button(self.bottomframe, text="⚙ ディレクトリ設定",                                
+                                     padding=ipad_set,  command=self.settings)
+        settings_button.grid(row=0, rowspan=1, column=1, padx=10, pady=5,)
+
+        # 「readme.txtを閲覧」ボタンの生成
+        open_readme = ttk.Button(self.bottomframe, text="📝 readme.mdを閲覧",
+                                 padding=ipad_set, command=lambda:view_readme())
+        open_readme.grid(row=0, column=0,
+                         padx=10,  pady=5, sticky=tk.E)
 
         # 終了ボタンの生成
-        quit_button = ttk.Button(self.frame, text="終了",command=self.quit)
-        quit_button.grid(row=4, column=3,
+        quit_button = ttk.Button(self.bottomframe, text="🚪 終了",
+                                 command=self.quit, padding=ipad_set)
+        quit_button.grid(row=0, column=2,
                          padx=10, pady=5, sticky=tk.E)
+
     
     def make_widgets(self):
         self.contest_numbers = []
@@ -210,25 +229,24 @@ class AtCoderMainWindow:
 
             for key,val in v.items():
                 #print(key,val)
-                if key == "sample_i":
+                if key == "sample_i":      # サンプル入力例をテキストボックスに出力
                     with open(val, "r") as f:
                         data = f.read()
                         self.sample_input.insert(tk.END,data)
-                elif key == "sample_o":
+                elif key == "sample_o":    # サンプル出力例をテキストボックスに出力
                     with open(val, "r") as f:
                         data = f.read()
                         self.sample_output.insert(tk.END,data)
-                elif key == "answer":
-                    if v["judge"] == "AC":
-                        with open(val, "r") as f:
-                            data = f.read()
-                            self.mycode_output.insert(tk.END,data)
+                elif key == "answer":      # 自作解答コードによる解答(標準出力)をテキストボックスに出力
+                    with open(val, "r") as f:
+                        data = f.read()
+                        self.mycode_output.insert(tk.END,data)
                 elif key == "error":
-                    if v["judge"] == "RE":
+                    if v["judge"] == "RE": # ランタイムエラー判定が下された場合はエラー出力をテキストボックスに挿入
                         with open(val, "r") as f:
                             data = f.read()
                             self.mycode_output.insert(tk.END,data)
-                elif key == "judge":
+                elif key == "judge":       # キーを利用して全体のジャッジデータを記録
                     judgements[val] += 1 
             self.sample_input.insert(tk.END, f"")
             self.sample_input.insert(tk.END,  "\n"+("-"*len(f"\nSample Case No.{k:0=2}  \n")))
