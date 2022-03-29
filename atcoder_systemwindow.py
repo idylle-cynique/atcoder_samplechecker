@@ -1,4 +1,3 @@
-
 import os, json, re
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -101,20 +100,22 @@ class AtCoderMainWindow:
                 variable=self.contestname,
                 value = button_names[i],
                 command=lambda:self.get_value()))
-            buttons[i].grid(row=i+1,padx=10, pady=5)
+            buttons[i].grid(row=i+1,padx=6, pady=2)
         
         # 問題ページへのアクセスボタン
-        browse_question = ttk.Button(self.frame, text="❔ 問題を確認する",                                
-                                     padding=(10,36,10,36),  command=self.browse_link)
-        browse_question.grid(row=2, rowspan=1, column=4, padx=10, pady=5,)        
+        buttonSize = (10,20,10,20)
+        browse_question = ttk.Button(
+            self.frame, text="❔ 問題を確認する",                                
+            padding=buttonSize,  command=self.browse_link)
+        browse_question.grid(row=1, rowspan=3, column=4, padx=10, pady=5, sticky=tk.N+tk.S)        
         
         # 実行ボタンの生成
-        exe_button = ttk.Button(self.frame, text="🔘 チェック開始",                                
-                                padding=(10,36,10,36), 
-                                command=lambda:self.check_code(
-
-                                ))
-        exe_button.grid(row=1, rowspan=3, column=3, padx=10, pady=5,)
+        exe_button = ttk.Button(
+            self.frame, text="🔘 チェック開始",                                
+            padding=buttonSize, 
+            command=lambda:self.check_code()
+            )
+        exe_button.grid(row=1, rowspan=3, column=3, padx=10, pady=5, sticky=tk.N+tk.S)
         
         '''
             最下部のフレーム内のウィジェットに関する設定
