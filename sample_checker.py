@@ -49,16 +49,17 @@ class AtCoderSample:
         html = requests.get(self.url)
         soup = BeautifulSoup(html.content, "html.parser")
         pagetitle = str(soup.find("title"))
-        print(pagetitle)
+        error_flag = (400 <= html.status_code and html.status_code < 500)
+        print(pagetitle,"\n",html.status_code,type(html.status_code),":",error_flag)
 
-        if "404 Not Found" in pagetitle and recheck == False:  # 再チェック処理でないなら修整処理を施す
+        if error_flag  and recheck == False:  # 再チェック処理でないなら修整処理を施す
             print("リンクを修正します")
             contestring = self.title.lower().split("-")
             contestring[-1] = oldabc_dict[contestring[-1][0]]
             self.url = "https://atcoder.jp/contests/{:}/tasks/{:}".format(contestring[0], "_".join(contestring))
             print(self.url)
             return self.resolve_url(recheck=True) # リンクが適正か再チェック
-        elif "404 Not Found" in pagetitle and recheck == True: # 再チェックしてなおリンクが不正ならFalseを返す
+        elif error_flag and recheck == True: # 再チェックしてなおリンクが不正ならFalseを返す
             return False
         else:                                                  # 適切に修整された場合はTrueを返す
             return True
@@ -218,8 +219,8 @@ class AtCoderSample:
 def main():
     url = r"https://atcoder.jp/contests/arc012/tasks/arc012_b"
     
-    temp = AtCoderSample(url)
-    flag = temp.resolve_url()
+    temp = AtCoderSample()
+    temp.resolve_string("ARC","12","B")
 
     temp.make_dirs()
     temp.get_sample()
