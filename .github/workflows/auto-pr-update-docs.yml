@@ -1,0 +1,65 @@
+name: auto-pr-update-docs
+
+on:
+  push:
+    branches:
+      - update-solo-dev-docs
+
+concurrency:
+  group: update-docs-pr
+  cancel-in-progress: true
+
+jobs:
+  create-pr:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for existing PR
+        id: pr
+        run: |
+          PR_NUMBER=$(gh pr list --base main --head ${{ github.ref_name }} --json number --jq '.[0].number // empty' | tr -d '\n')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "pr_exists=true" | tee -a $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" | tee -a $GITHUB_OUTPUT
+          else
+            echo "pr_exists=false" | tee -a $GITHUB_OUTPUT
+            echo "pr_number=" | tee -a $GITHUB_OUTPUT
+          fi
+          # 出力値をログにも明示
+          echo "[LOG] pr_exists=$([ -n "$PR_NUMBER" ] && echo true || echo false)"
+          echo "[LOG] pr_number=$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate commit log
+        id: commits
+        run: |
+          COMMITS=$(git log origin/main..HEAD --pretty=format:'- **%h** %s (%an, %ad)' --date=format:'%Y-%m-%d' --reverse)
+          {
+            echo "BODY<<EOF"
+            echo "## Commit Logs"
+            echo ""
+            echo "$COMMITS"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Update or Create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ steps.commits.outputs.BODY }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          PR_EXISTS: ${{ steps.pr.outputs.pr_exists }}
+        run: |
+          if [ "$PR_EXISTS" == "true" ]; then
+            gh pr edit "$PR_NUMBER" --title "docs: Update SoloDev Documentation" --body "$PR_BODY" --add-assignee "${{ github.actor }}"
+            echo "[LOG] Updated existing PR #$PR_NUMBER"
+          else
+            gh pr create --base main --head ${{ github.ref_name }} --title "docs: Update SoloDev Documentation" --body "$PR_BODY" --assignee "${{ github.actor }}"
+            echo "[LOG] Created new PR"
+          fi
