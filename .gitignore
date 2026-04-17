@@ -130,3 +130,5 @@ dmypy.json
 
 # workdir
 workspace
+# solo-dev
+.dev-tools/
